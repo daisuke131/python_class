@@ -25,6 +25,7 @@ class Order:
     def __init__(self, item_master):
         self.item_order_list = []
         self.item_count_list = []
+        self.total_price: int = 0
         self.item_master = item_master
 
     def fetch_item_data(self, item_code: str):
@@ -78,7 +79,6 @@ class Order:
         self.item_order_list.append(item_code)
 
     def view_item_list(self):
-        total_price: int = 0
         for order_item_code, order_count in zip(
             self.item_order_list, self.item_count_list
         ):
@@ -90,13 +90,9 @@ class Order:
             self.write_receipt("数量：{}".format("{:,}".format(order_count)))
             self.write_receipt("小計：￥{}円".format("{:,}".format(item_total_price)))
             self.write_receipt("===================================")
-            total_price += item_total_price
-        self.write_receipt("合計：￥{}円".format("{:,}".format(total_price)))
-        print("合計：￥{}円になります。".format("{:,}".format(total_price)))
-        # 精算処理
-        self.pay_off(total_price)
-        print("レシートが発行されました。")
-        print("ありがとうございました。")
+            self.total_price += item_total_price
+        self.write_receipt("合計：￥{}円".format("{:,}".format(self.total_price)))
+        print("合計：￥{}円になります。".format("{:,}".format(self.total_price)))
 
     def write_receipt(self, write_text: str):
         with open(
@@ -106,13 +102,13 @@ class Order:
         ) as f:
             f.write(write_text + "\n")
 
-    def pay_off(self, total_price: int):
+    def pay_off(self):
         while True:
             pay_price_str: str = input("支払い金額を入力してください>>")
             pay_price_str = pay_price_str.strip()
             try:
                 pay_price: int = int(pay_price_str)
-                if total_price <= pay_price:
+                if self.total_price <= pay_price:
                     break
                 else:
                     print("料金が不足しています。")
@@ -120,7 +116,7 @@ class Order:
             except Exception:
                 print("金額を正しく入力してください。")
                 pass
-        change_price: int = pay_price - total_price
+        change_price: int = pay_price - self.total_price
         self.write_receipt("預かり金額：￥{}円".format("{:,}".format(pay_price)))
         self.write_receipt("おつり：￥{}円".format("{:,}".format(change_price)))
         if change_price > 0:
@@ -135,9 +131,14 @@ def main():
         print(f"{item.item_code} {item.item_name} {item.price}")
     # オーダー登録
     order = Order(item_master)
+    # 注文入力
     order.input_order()
     # オーダー表示
     order.view_item_list()
+    # 支払い
+    order.pay_off()
+    print("レシートが発行されました。")
+    print("ありがとうございました。")
 
 
 def reegist_master():
